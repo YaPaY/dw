@@ -29,15 +29,24 @@ export const parseList = (html: string) => {
 
 export const extractVideoIds = (
   html: string
-): { id: string; name: string }[] => {
+): {
+  id: string;
+  name: string;
+  url?: string;
+  playerType: "audio" | "video";
+}[] => {
   const $ = cheerio.load(html);
 
-  const result = $("div.video[data-media-id]")
+  const result = $("div.mediaItem[data-media-id]")
     .toArray()
     .map((elem) => {
       return {
+        url: $(elem).find('input[name="file_name"]').attr("value") as string,
         id: $(elem).attr("data-media-id") as string,
         name: $(elem).find('input[name="media_title"]').attr("value") as string,
+        playerType: $(elem).find('input[name="player_type"]').attr("value") as
+          | "audio"
+          | "video",
       };
     });
 
