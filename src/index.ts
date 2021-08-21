@@ -20,10 +20,12 @@ const dwAddon = createAddon({
     {
       name: "Top stories",
       id: "s-9097",
+      features: { search: { enabled: false } },
     },
     {
       name: "Media content",
       id: searchID,
+      features: { search: { enabled: true } },
     },
   ],
 });
@@ -43,6 +45,7 @@ dwAddon.registerActionHandler("catalog", async (input, ctx) => {
               showteasers: true,
               showfilter: true,
               pagenumber: cursor,
+              filter: input.search,
             })
         )
         .then((_) => _.text())
