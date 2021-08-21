@@ -19,5 +19,5 @@ WORKDIR /code
 ENV LOAD_MEDIAURL_CACHE_MODULE "@mediaurl/redis-cache @mediaurl/mongodb-cache"
 COPY --from=build /code/dist ./dist/
 COPY --from=deps /code/node_modules ./node_modules/
-COPY locales ./locales
+
 CMD node dist
