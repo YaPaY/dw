@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as qs from "querystring";
 import {
   createAddon,
   ItemResponse,
@@ -8,13 +8,14 @@ import {
 } from "@mediaurl/sdk";
 import { extractVideoIds, parseList, parseStreamSources } from "./dw.service";
 
+const searchID = "__SEARCH";
+
 const dwAddon = createAddon({
   id: "dw",
-  name: "News and current affairs from Germany and around the world – DW",
+  name: "DW | News and current affairs from Germany and around the world",
   version: "0.0.0",
   icon: "https://api.faviconkit.com/beta.dw.com/144",
-  // Trigger this addon on this kind of items
-  itemTypes: ["movie", "series"],
+  itemTypes: ["movie"],
   catalogs: [
     {
       name: "Top stories",
@@ -22,7 +23,7 @@ const dwAddon = createAddon({
     },
     {
       name: "Media content",
-      id: "s-100826",
+      id: searchID,
     },
   ],
 });
@@ -30,11 +31,26 @@ const dwAddon = createAddon({
 dwAddon.registerActionHandler("catalog", async (input, ctx) => {
   console.log("catalog", input);
 
-  const html = await ctx
-    .fetch(`https://www.dw.com/en/${input.catalogId}`)
-    .then((_) => _.text());
+  const isSearch = input.catalogId === searchID;
+  const cursor = <number>input.cursor || 1;
 
-  const items = parseList(html);
+  const items = await (isSearch
+    ? ctx
+        .fetch(
+          `https://www.dw.com/mediafilter/research?` +
+            qs.stringify({
+              lang: "en",
+              showteasers: true,
+              showfilter: true,
+              pagenumber: cursor,
+            })
+        )
+        .then((_) => _.text())
+        .then(parseList)
+    : ctx
+        .fetch(`https://www.dw.com/en/${input.catalogId}`)
+        .then((_) => _.text())
+        .then(parseList));
 
   return {
     options: { displayName: true, imageShape: "landscape" },
@@ -49,14 +65,14 @@ dwAddon.registerActionHandler("catalog", async (input, ctx) => {
         : null) as MovieItem,
       ...items,
     ].filter((_) => _),
-    nextCursor: null,
+    nextCursor: items.length && isSearch ? cursor + 1 : null,
   };
 });
 
 dwAddon.registerActionHandler("item", async (input, ctx) => {
   console.log("item", input);
 
-  const common = {
+  const common: Partial<MovieItem> = {
     type: "movie",
     ids: input.ids,
   };
@@ -72,7 +88,8 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
     const html = await ctx
       .fetch(`https://www.dw.com/en/media-center/live-tv/s-100825?hls=true`)
       .then((_) => _.text());
-    return { ...common, sources: await parseStreamSources(html) };
+
+    return <MovieItem>{ ...common, sources: parseStreamSources(html) };
   }
 
   const getSource = (id: string) => {
@@ -88,7 +105,7 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
   const sources: PlayableItem["sources"] = await (isVideo
     ? getSource(videoIdMatch[1]).then((_) => {
         return _.map(({ file }) => {
-          return { url: file };
+          return { url: file, name: "DW" };
         });
       })
     : ctx
@@ -107,7 +124,7 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
           )
         ));
 
-  return {
+  return <MovieItem>{
     ...common,
     sources,
   };

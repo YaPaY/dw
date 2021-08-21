@@ -11,7 +11,7 @@ export const parseList = (html: string) => {
     ...$("div.col2.basicTeaser").toArray(),
 
     // Search page
-    ...$("#searchResults div.news.searchres").toArray(),
+    ...$("div.news.searchres").toArray(),
   ];
 
   elements.forEach((elem) => {
