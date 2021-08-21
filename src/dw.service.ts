@@ -30,7 +30,18 @@ export const parseList = (html: string) => {
 export const extractVideoIds = (
   html: string
 ): { id: string; name: string }[] => {
-  return [];
+  const $ = cheerio.load(html);
+
+  const result = $("div.video[data-media-id]")
+    .toArray()
+    .map((elem) => {
+      return {
+        id: $(elem).attr("data-media-id") as string,
+        name: $(elem).find('input[name="media_title"]').attr("value") as string,
+      };
+    });
+
+  return result;
 };
 
 export const parseStreamSources = (html: string): MovieItem["sources"] => {

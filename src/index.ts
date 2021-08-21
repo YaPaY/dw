@@ -94,7 +94,7 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
 
   const getSource = (id: string) => {
     return ctx
-      .fetch(`https://www.dw.com/playersources/v-${videoIdMatch[1]}?hls=true`, {
+      .fetch(`https://www.dw.com/playersources/v-${id}?hls=true`, {
         headers: {
           "content-type": "application/json",
         },
@@ -109,9 +109,7 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
         });
       })
     : ctx
-        .fetch(
-          `https://www.dw.com/en/merkel-asks-russia-to-pressure-taliban-on-evacuations/a-58915545`
-        )
+        .fetch(`https://www.dw.com/${input.ids.id}`)
         .then((_) => _.text())
         .then(extractVideoIds)
         .then((results) =>
