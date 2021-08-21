@@ -58,7 +58,7 @@ dwAddon.registerActionHandler("catalog", async (input, ctx) => {
       (input.catalogId === "s-9097"
         ? {
             type: "movie",
-            name: "Live TV",
+            name: "Live TV 🔴",
             ids: { id: "/en/s-100825" },
             images: { poster: "https://static.dw.com/image/47222913_304.png" },
           }
