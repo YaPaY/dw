@@ -96,7 +96,6 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
   }
 
   const getSource = (id: string) => {
-    console.log({ getSource: id });
     return ctx
       .fetch(`https://www.dw.com/playersources/v-${id}?hls=true`, {
         headers: {
@@ -105,8 +104,6 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
       })
       .then<{ file: string }[]>((_) => _.json());
   };
-
-  console.log({ isVideo });
 
   const sources: PlayableItem["sources"] = await (isVideo
     ? getSource(videoIdMatch[1]).then((_) => {
@@ -119,7 +116,6 @@ dwAddon.registerActionHandler("item", async (input, ctx) => {
         .then((_) => _.text())
         .then(extractVideoIds)
         .then((results) => {
-          console.log({ results });
           return Promise.all(
             results.map(({ id, name, url, playerType }) => {
               return url
