@@ -1,14 +1,27 @@
 import * as qs from "querystring";
 import {
+  CatalogOptions,
   createAddon,
-  ItemResponse,
   MovieItem,
   PlayableItem,
   runCli,
 } from "@mediaurl/sdk";
-import { extractVideoIds, parseList, parseStreamSources } from "./dw.service";
+import {
+  extractVideoIds,
+  getRegionLinks,
+  parseList,
+  parseStreamSources,
+} from "./dw.service";
 
+const topStoriesID = "s-9097";
 const searchID = "__SEARCH";
+
+const liveItem: MovieItem = {
+  type: "movie",
+  name: "Live TV 🔴",
+  ids: { id: "/en/s-100825" },
+  images: { poster: "https://static.dw.com/image/47222913_304.png" },
+};
 
 const dwAddon = createAddon({
   id: "dw",
@@ -19,7 +32,7 @@ const dwAddon = createAddon({
   catalogs: [
     {
       name: "Top stories",
-      id: "s-9097",
+      id: topStoriesID,
       features: { search: { enabled: false } },
     },
     {
@@ -35,40 +48,56 @@ dwAddon.registerActionHandler("catalog", async (input, ctx) => {
 
   const isSearch = input.catalogId === searchID;
   const cursor = <number>input.cursor || 1;
+  const options: CatalogOptions = {
+    displayName: true,
+    imageShape: "landscape",
+  };
 
-  const items = await (isSearch
-    ? ctx
-        .fetch(
-          `https://www.dw.com/mediafilter/research?` +
-            qs.stringify({
-              lang: "en",
-              showteasers: true,
-              showfilter: true,
-              pagenumber: cursor,
-              filter: input.search,
-            })
-        )
-        .then((_) => _.text())
-        .then(parseList)
-    : ctx
-        .fetch(`https://www.dw.com/en/${input.catalogId}`)
-        .then((_) => _.text())
-        .then(parseList));
+  if (isSearch) {
+    const items = await ctx
+      .fetch(
+        `https://www.dw.com/mediafilter/research?` +
+          qs.stringify({
+            lang: "en",
+            showteasers: true,
+            showfilter: true,
+            pagenumber: cursor,
+            filter: input.search,
+          })
+      )
+      .then((_) => _.text())
+      .then(parseList);
+
+    return {
+      options,
+      items,
+      nextCursor: items.length ? cursor + 1 : null,
+    };
+  }
+
+  const html = await ctx
+    .fetch(`https://www.dw.com/${input.catalogId}`)
+    .then((_) => _.text());
+
+  const items = parseList(html);
+  const regionsIdsMap = getRegionLinks(html);
+
+  const regionId =
+    regionsIdsMap[input.region.toLowerCase()] ||
+    regionsIdsMap[input.language.toLowerCase()];
+
+  const regionHtml =
+    regionId && regionId !== input.catalogId
+      ? await ctx.fetch(`https://www.dw.com/${regionId}`).then((_) => _.text())
+      : null;
 
   return {
     options: { displayName: true, imageShape: "landscape" },
     items: [
-      (input.catalogId === "s-9097"
-        ? {
-            type: "movie",
-            name: "Live TV 🔴",
-            ids: { id: "/en/s-100825" },
-            images: { poster: "https://static.dw.com/image/47222913_304.png" },
-          }
-        : null) as MovieItem,
-      ...items,
+      input.catalogId === topStoriesID ? liveItem : null,
+      ...(regionHtml ? parseList(regionHtml) : parseList(html)),
     ].filter((_) => _),
-    nextCursor: items.length && isSearch ? cursor + 1 : null,
+    nextCursor: null,
   };
 });
 

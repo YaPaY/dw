@@ -4,7 +4,7 @@ import cheerio from "cheerio";
 export const parseList = (html: string) => {
   const $ = cheerio.load(html);
 
-  const result: VODItem[] = [];
+  const result: MovieItem[] = [];
 
   const elements = [
     // Top stories page
@@ -66,4 +66,28 @@ export const parseStreamSources = (html: string): MovieItem["sources"] => {
         url: $(elem).find('input[name="file_name"]').attr("value") as string,
       };
     });
+};
+
+export const getRegionLinks = (html: string): { [locale: string]: string } => {
+  const result = {};
+  const $ = cheerio.load(html);
+
+  $("#languageSection a")
+    .toArray()
+    .reduce((acc, elem) => {
+      const href = $(elem).attr("href") as string;
+      const region = href
+        .split("/")
+        .filter((_) => _)
+        .shift();
+      const id = href.split("/").pop();
+
+      if (region) {
+        acc[region] = id;
+      }
+
+      return acc;
+    }, result);
+
+  return result;
 };
