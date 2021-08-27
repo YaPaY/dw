@@ -96,7 +96,7 @@ dwAddon.registerActionHandler("catalog", async (input, ctx) => {
     items: [
       input.catalogId === topStoriesID ? liveItem : null,
       ...(regionHtml ? parseList(regionHtml) : parseList(html)),
-    ].filter((_) => _),
+    ].filter((_): _ is MovieItem => !!_),
     nextCursor: null,
   };
 });
