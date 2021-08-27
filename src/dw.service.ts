@@ -91,3 +91,36 @@ export const getRegionLinks = (html: string): { [locale: string]: string } => {
 
   return result;
 };
+
+export const topStoriesIds = {
+  sq: "s-10250",
+  am: "s-11646",
+  ar: "s-9106",
+  bn: "s-11929",
+  bs: "s-10037",
+  bg: "s-10257",
+  zh: "s-9058?&zhongwen=trad",
+  hr: "s-9747",
+  "fa-af": "s-10259",
+  en: "s-9097",
+  fr: "s-10261",
+  de: "s-9077",
+  el: "s-10507",
+  ha: "s-11603",
+  hi: "s-11931",
+  id: "s-11546",
+  sw: "s-11588",
+  mk: "s-10339",
+  ps: "s-11722",
+  "fa-ir": "s-9993",
+  pl: "s-11394",
+  "pt-002": "s-13918",
+  "pt-br": "s-7111",
+  ro: "s-10575",
+  ru: "s-9119",
+  sr: "s-10682",
+  es: "s-30684",
+  tr: "s-10201",
+  uk: "s-9874",
+  ur: "s-11933",
+};

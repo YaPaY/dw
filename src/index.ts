@@ -8,13 +8,13 @@ import {
 } from "@mediaurl/sdk";
 import {
   extractVideoIds,
-  getRegionLinks,
   parseList,
   parseStreamSources,
+  topStoriesIds,
 } from "./dw.service";
 
-const topStoriesID = "s-9097";
-const searchID = "__SEARCH";
+const topStoriesLocalId = "__TOP_STORIES_LOCAL__";
+const searchId = "__SEARCH__";
 
 const liveItem: MovieItem = {
   type: "movie",
@@ -32,12 +32,15 @@ const dwAddon = createAddon({
   catalogs: [
     {
       name: "Top stories",
-      id: topStoriesID,
-      features: { search: { enabled: false } },
+      id: topStoriesIds["en"],
+    },
+    {
+      name: "Top stories (local)",
+      id: topStoriesLocalId,
     },
     {
       name: "Media content",
-      id: searchID,
+      id: searchId,
       features: { search: { enabled: true } },
     },
   ],
@@ -46,7 +49,7 @@ const dwAddon = createAddon({
 dwAddon.registerActionHandler("catalog", async (input, ctx) => {
   console.log("catalog", input);
 
-  const isSearch = input.catalogId === searchID;
+  const isSearch = input.catalogId === searchId;
   const cursor = <number>input.cursor || 1;
   const options: CatalogOptions = {
     displayName: true,
@@ -75,27 +78,31 @@ dwAddon.registerActionHandler("catalog", async (input, ctx) => {
     };
   }
 
+  const id =
+    input.catalogId === topStoriesLocalId
+      ? topStoriesIds[input.region.toLowerCase()]
+      : input.catalogId;
+  console.log({ id });
+
   const html = await ctx
-    .fetch(`https://www.dw.com/${input.catalogId}`)
+    .fetch(`https://www.dw.com/${id}`)
     .then((_) => _.text());
 
-  const items = parseList(html);
-  const regionsIdsMap = getRegionLinks(html);
-
-  const regionId =
-    regionsIdsMap[input.region.toLowerCase()] ||
-    regionsIdsMap[input.language.toLowerCase()];
-
-  const regionHtml =
-    regionId && regionId !== input.catalogId
-      ? await ctx.fetch(`https://www.dw.com/${regionId}`).then((_) => _.text())
-      : null;
+  if (
+    !id ||
+    (input.catalogId === topStoriesLocalId && id === topStoriesIds["en"])
+  ) {
+    return {
+      items: [],
+      nextCursor: null,
+    };
+  }
 
   return {
     options: { displayName: true, imageShape: "landscape" },
     items: [
-      input.catalogId === topStoriesID ? liveItem : null,
-      ...(regionHtml ? parseList(regionHtml) : parseList(html)),
+      id === topStoriesIds["en"] ? liveItem : null,
+      ...parseList(html),
     ].filter((_): _ is MovieItem => !!_),
     nextCursor: null,
   };
