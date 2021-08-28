@@ -15,9 +15,13 @@ export const parseList = (html: string) => {
   ];
 
   elements.forEach((elem) => {
+    const nameElem = $(elem).find("h2").first();
+
+    $(nameElem).children().remove();
+
     result.push({
       type: "movie",
-      name: $(elem).find("h2").contents().first().text().trim(),
+      name: $(nameElem).contents().text().trim(),
       description: $(elem).find("p").first().text(),
       ids: { id: $(elem).find("a").attr("href") as string },
       images: { poster: $(elem).find("img").attr("src") },
